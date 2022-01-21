@@ -170,8 +170,7 @@ func TestSend(t *testing.T) {
 	}
 }
 
-func TestReceive(t *testing.T) {
-
+func TestConnection(t *testing.T) {
 	ch := make(chan string)
 
 	receiveFunc := func(data []byte) {
