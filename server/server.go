@@ -157,7 +157,8 @@ func (s *Server) packetListenLoop() {
 			s.wg.Add(1)
 			go s.relayLoop(localConn, addr)
 
-			go s.connectionHandler(remoteConn)
+			go s.connectionHandler(newConnAddrWrapper(remoteConn,
+				s.packetConn.LocalAddr(), addr))
 		}
 
 		_, err = localConn.Write(buffer[:n])

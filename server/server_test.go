@@ -243,6 +243,14 @@ func TestConnection_TCP(t *testing.T) {
 func TestConnection_UDP(t *testing.T) {
 	handlerCh := make(chan []byte)
 	connectionHandler := func(conn net.Conn) {
+		if conn.LocalAddr().String() != "a.a.a.a:bbbb" {
+			t.Errorf("expected 'a.a.a.a:bbbb', got %v", conn.LocalAddr().String())
+		}
+
+		if conn.RemoteAddr().String() != "x.x.x.x:yyyy" {
+			t.Errorf("expected 'x.x.x.x:yyy', got %v", conn.RemoteAddr().String())
+		}
+
 		buffer := make([]byte, 4096)
 		for {
 			n, err := conn.Read(buffer)
@@ -297,6 +305,16 @@ func TestConnection_UDP(t *testing.T) {
 		CloseFunc: func() error {
 			close(readFromDataCh)
 			return nil
+		},
+		LocalAddrFunc: func() net.Addr {
+			return &testing2.MockAddr{
+				NetworkFunc: func() string {
+					return "udp"
+				},
+				StringFunc: func() string {
+					return "a.a.a.a:bbbb"
+				},
+			}
 		},
 	}
 
