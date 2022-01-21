@@ -14,7 +14,7 @@ type Client struct {
 	network     string
 	address     string
 	splitFunc   bufio.SplitFunc
-	receiveFunc ReceiveFunc
+	dataHandler DataHandler
 
 	// For testing purposes only.
 	dial func(string, string) (net.Conn, error)
@@ -26,10 +26,10 @@ type Client struct {
 	started bool
 }
 
-// ReceiveFunc is the signature for functions that should be called when
+// DataHandler is the signature for functions that should be called when
 // data is received from the server and a valid token is detected by the
 // associated bufio.SplitFunc.
-type ReceiveFunc func(data []byte)
+type DataHandler func(data []byte)
 
 // ScanFullBuffer is a bufio.SplitFunc that always returns all data in the
 // buffer.
@@ -44,13 +44,13 @@ func ScanFullBuffer(data []byte, atEOF bool) (int, []byte, error) {
 
 // New creates a new Client instance that will try to connect to the given
 // network and address and that will use the given splitFunc to parse incoming
-// data into tokens and the call the given receiveFunc to handle those tokens.
-// Note that New does not do any validation whatsoever and errors will be
-// reported when Start is called.
+// data into tokens and the call the given dataHandler to handle those tokens.
+// Note that New only validates that the dataHandler and splitFunc ate not nil.
+// All other errors will be reported when Start is called.
 func New(network, address string, splitFunc bufio.SplitFunc,
-	receiveFunc ReceiveFunc) (*Client, error) {
-	if receiveFunc == nil {
-		return nil, fmt.Errorf("receiveFunc cannot be nil")
+	dataHandler DataHandler) (*Client, error) {
+	if dataHandler == nil {
+		return nil, fmt.Errorf("dataHandler cannot be nil")
 	}
 
 	if splitFunc == nil {
@@ -61,18 +61,18 @@ func New(network, address string, splitFunc bufio.SplitFunc,
 		network:     network,
 		address:     address,
 		splitFunc:   splitFunc,
-		receiveFunc: receiveFunc,
+		dataHandler: dataHandler,
 		dial:        net.Dial,
 	}, nil
 }
 
 func NewWithConn(conn net.Conn, splitFunc bufio.SplitFunc,
-	receiveFunc ReceiveFunc) (*Client, error) {
+	dataHandler DataHandler) (*Client, error) {
 	if conn == nil {
 		return nil, fmt.Errorf("conn cannot be nil")
 	}
 
-	c, err := New("", "", splitFunc, receiveFunc)
+	c, err := New("", "", splitFunc, dataHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (c *Client) receiveLoop() {
 	scanner := bufio.NewScanner(c.conn)
 	scanner.Split(c.splitFunc)
 	for scanner.Scan() {
-		c.receiveFunc(scanner.Bytes())
+		c.dataHandler(scanner.Bytes())
 	}
 
 	c.wg.Done()

@@ -173,11 +173,11 @@ func TestSend(t *testing.T) {
 func TestConnection(t *testing.T) {
 	ch := make(chan string)
 
-	receiveFunc := func(data []byte) {
+	dataHandler := func(data []byte) {
 		ch <- string(data)
 	}
 
-	c, err := New("", "", bufio.ScanWords, receiveFunc)
+	c, err := New("", "", bufio.ScanWords, dataHandler)
 	if err != nil {
 		t.Errorf("expected nil error, got %v", err)
 	}
