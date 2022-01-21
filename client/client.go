@@ -66,6 +66,22 @@ func New(network, address string, splitFunc bufio.SplitFunc,
 	}, nil
 }
 
+func NewWithConn(conn net.Conn, splitFunc bufio.SplitFunc,
+	receiveFunc ReceiveFunc) (*Client, error) {
+	if conn == nil {
+		return nil, fmt.Errorf("conn cannot be nil")
+	}
+
+	c, err := New("", "", splitFunc, receiveFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	c.conn = conn
+
+	return c, nil
+}
+
 // Start tries to start the connection associated with this Client. It returns a
 // nil error on success and a non-nil error on failure.
 func (c *Client) Start() error {
@@ -76,12 +92,14 @@ func (c *Client) Start() error {
 		return fmt.Errorf("client already started")
 	}
 
-	conn, err := c.dial(c.network, c.address)
-	if err != nil {
-		return err
-	}
+	if c.conn == nil {
+		conn, err := c.dial(c.network, c.address)
+		if err != nil {
+			return err
+		}
 
-	c.conn = conn
+		c.conn = conn
+	}
 
 	c.wg.Add(1)
 	go c.receiveLoop()
