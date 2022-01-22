@@ -111,11 +111,16 @@ func (s *Server) Stop() error {
 		s.packetConn.Close()
 	}
 
+	// Unlock while we wait for the gotoutines to cleanup.
+	s.m.Unlock()
+
 	s.wg.Wait()
 
+	// Lock again to set started to false and aslo satisfy the defer above.
+	// TODO(bga): Revisit this.
+	s.m.Lock()
+
 	s.started = false
-	s.listener = nil
-	s.packetConn = nil
 
 	return nil
 }
@@ -132,6 +137,8 @@ func (s *Server) listenLoop() {
 
 		go s.connectionHandler(conn)
 	}
+
+	s.listener = nil
 
 	s.wg.Done()
 }
@@ -176,6 +183,7 @@ func (s *Server) packetListenLoop() {
 	}
 
 	s.packetAddrConnMap = nil
+	s.packetConn = nil
 
 	s.wg.Done()
 }
