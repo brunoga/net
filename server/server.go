@@ -105,6 +105,7 @@ func (s *Server) Stop() error {
 		return fmt.Errorf("server not started")
 	}
 
+	// Signal listener goroutines to exit.
 	if s.listener != nil {
 		s.listener.Close()
 	} else if s.packetConn != nil {
