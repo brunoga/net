@@ -201,6 +201,7 @@ func (s *Server) relayLoop(localConn net.Conn, addr net.Addr) {
 	}
 
 	localConn.Close()
+	delete(s.packetAddrConnMap, addr.String())
 
 	s.wg.Done()
 }
