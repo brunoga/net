@@ -8,7 +8,7 @@ import (
 )
 
 // Client is a client that connects to a specific address using a specific
-// network and manages sending and receioving that through that connection. It
+// network and manages sending and receiving data through that connection. It
 // supports any protocols that implement the net.Conn interface.
 type Client struct {
 	network     string
