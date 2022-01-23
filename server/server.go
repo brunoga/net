@@ -139,7 +139,6 @@ func (s *Server) listenLoop() {
 		go s.connectionHandler(conn)
 	}
 
-	s.listener.Close()
 	s.listener = nil
 
 	s.wg.Done()
