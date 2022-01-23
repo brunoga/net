@@ -139,6 +139,7 @@ func (s *Server) listenLoop() {
 		go s.connectionHandler(conn)
 	}
 
+	s.listener.Close()
 	s.listener = nil
 
 	s.wg.Done()
@@ -165,7 +166,9 @@ func (s *Server) packetListenLoop() {
 			s.wg.Add(1)
 			go s.relayLoop(localConn, addr)
 
-			go s.connectionHandler(newConnAddrWrapper(remoteConn,
+			// Handle connection.
+			s.wg.Add(1)
+			go s.connectionHandlerRunner(newConnAddrWrapper(remoteConn,
 				s.packetConn.LocalAddr(), addr))
 		}
 
@@ -211,6 +214,14 @@ func (s *Server) relayLoop(localConn net.Conn, addr net.Addr) {
 
 	localConn.Close()
 	delete(s.packetAddrConnMap, addr.String())
+
+	s.wg.Done()
+}
+
+func (s *Server) connectionHandlerRunner(conn net.Conn) {
+	s.connectionHandler(conn)
+
+	conn.Close()
 
 	s.wg.Done()
 }
